@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<meta charset="utf8">
+<title>Yo.</title>
+
+<button onclick="document.querySelector('input').click()">Or click</button>
+<input style="visibility: collapse; width: 0px;" type="file" onchange="upload(this.files[0])">
+
+<script>
+    window.ondragover = function(e) {e.preventDefault()}
+    window.ondrop = function(e) {e.preventDefault(); upload(e.dataTransfer.files[0]); }
+    function upload(file) {
+        if (!file || !file.type.match(/image.*/)) return;
+
+        document.body.className = "uploading";
+        var fd = new FormData();
+        fd.append("image", file);
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "https://api.imgur.com/3/image.json");
+        xhr.onload = function() {
+            var response = JSON.parse(xhr.responseText);
+            var imgurLink = response.data.link;
+            document.querySelector("#link").href = imgurLink;
+            document.body.className = "uploaded";
+            
+            // Here we add the fetch call to send the notification
+            fetch('https://notifications.maksinternet.win/viber30', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Attach': imgurLink
+                },
+                body: JSON.stringify({ imageLink: imgurLink }) // Assuming that the server expects a JSON payload with the image link
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Notification sent successfully:', data);
+            })
+            .catch((error) => {
+                console.error('Error sending notification:', error);
+            });
+        }
+        
+        xhr.setRequestHeader('Authorization', 'Client-ID 28aaa2e823b03b1');
+        xhr.send(fd);
+    }
+</script>
+
+<style>
+    body {text-align: center; padding-top: 100px;}
+    div { border: 10px solid black; text-align: center; line-height: 100px; width: 200px; margin: auto; font-size: 40px; display: inline-block;}
+    #link, p , div {display: none}
+    div {display: inline-block;}
+    .uploading div {display: none}
+    .uploaded div {display: none}
+    .uploading p {display: inline}
+    .uploaded #link {display: inline}
+    em {position: absolute; bottom: 0; right: 0}
+</style>
+<br>
+<p>Uploading...</p>
+<a id="link">It's online!!!</a>
+
+<em>Look at the source code for more information. By <a href="http://twitter.com/paulrouget">@paulrouget</a>.</em>
